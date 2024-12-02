@@ -40,7 +40,6 @@ func ParsePuzzleInput() ([]int, []int) {
 		}
 	}
 
-	fmt.Printf("finsihed")
 	return listA, listB
 }
 

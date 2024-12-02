@@ -4,10 +4,20 @@ import (
 	"testing"
 )
 
-func TestPart1(t *testing.B) {
+func BenchmarkPart1(b *testing.B) {
+	// set up dataset (aka puzzle data)
+	b.ResetTimer()
 
+	for i := 0; i < b.N; i++ {
+		// code to benchmark
+	}
 }
 
-func TestPart2(t *testing.B) {
+func BenchmarkPart2(b *testing.B) {
+	// set up dataset (aka puzzle data)
+	b.ResetTimer()
 
+	for i := 0; i < b.N; i++ {
+		// code to benchmark
+	}
 }

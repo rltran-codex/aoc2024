@@ -6,7 +6,6 @@ import (
 	"math"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/rltran-codex/aoc-2024-go/utils"
 )
@@ -39,70 +38,42 @@ func ParsePuzzleInput() [][]int {
 }
 
 func Part1(reports [][]int) int {
-	var mu sync.Mutex
-	var wg sync.WaitGroup
 	results := 0
 
-	// use waitgroup to quickly iterate each row in 2D array.
 	for _, v := range reports {
-		wg.Add(1)
-		go func(nums []int) {
-			defer wg.Done()
-
-			n := recurValidate(nums, 0, nums[1]-nums[0] > 0)
-			if n == -1 {
-				// successfully passes conditions, increment results
-				mu.Lock()
-				results += 1
-				mu.Unlock()
-			}
-		}(v)
+		n := recurValidate(v, 0, v[1]-v[0] > 0)
+		if n == -1 {
+			results += 1
+		}
 	}
 
-	wg.Wait()
 	return results
 }
 
 func Part2(reports [][]int) int {
-	var mu sync.Mutex
-	var wg sync.WaitGroup
 	results := 0
 
-	for _, nums := range reports {
-		wg.Add(1)
-		go func(v []int) {
-			defer wg.Done()
+	for _, v := range reports {
+		n := recurValidate(v, 0, v[1]-v[0] > 0)
+		if n == -1 {
+			results += 1
+			continue
+		}
+		// unsafe report, try and permutate around area of failure
+		delIdx := []int{n - 1, n, n + 1}
+		for _, d := range delIdx {
+			if d < 0 || d >= len(v) {
+				continue
+			}
 
-			n := recurValidate(v, 0, v[1]-v[0] > 0)
-
-			// first recursion was successful
+			t1 := utils.RemoveIndex(v, d)
+			n = recurValidate(t1, 0, t1[1]-t1[0] > 0)
 			if n == -1 {
-				mu.Lock()
 				results += 1
-				mu.Unlock()
-				return
+				break
 			}
-
-			// unsafe report, try and permutate around area of failure
-			delIdx := []int{n - 1, n, n + 1}
-			for _, d := range delIdx {
-				if d < 0 || d >= len(v) {
-					continue
-				}
-
-				t1 := utils.RemoveIndex(v, d)
-				n = recurValidate(t1, 0, t1[1]-t1[0] > 0)
-				if n == -1 {
-					mu.Lock()
-					results += 1
-					mu.Unlock()
-					return
-				}
-			}
-		}(nums)
+		}
 	}
-
-	wg.Wait()
 
 	return results
 }

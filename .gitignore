@@ -18,4 +18,5 @@
 
 .DS_Store
 
-input/
+utils/input/*.txt
+utils/input/sample/*.txt

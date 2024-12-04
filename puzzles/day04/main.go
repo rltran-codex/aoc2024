@@ -33,15 +33,12 @@ func main() {
 
 func Part1(in [][]string) int {
 	// begin iterating each row to look for X
-	var mu sync.Mutex
-	var wg sync.WaitGroup
+	c := make(chan int)
 	results := 0
 	for row := range in {
 		for col := range in {
 			if in[row][col] == "X" {
-				wg.Add(1)
 				go func(puzzle [][]string, row int, col int) {
-					defer wg.Done()
 					words := []int{
 						isXMAS(buildWord(puzzle, row, col, 3, UP)),
 						isXMAS(buildWord(puzzle, row, col, 3, DOWN)),
@@ -53,17 +50,17 @@ func Part1(in [][]string) int {
 						isXMAS(buildWord(puzzle, row, col, 3, DOWNLEFT)),
 					}
 
-					mu.Lock()
 					for _, i := range words {
-						results += i
+						c <- i
 					}
-					mu.Unlock()
 				}(in, row, col)
 			}
 		}
 	}
 
-	wg.Wait()
+	for i := 0; i < len(c); i++ {
+		results += <-c
+	}
 	return results
 }
 

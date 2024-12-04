@@ -10,8 +10,8 @@ import (
 
 func main() {
 	in := utils.GetFlatPuzzleInput("day3.txt", false)
-	fmt.Printf("%d\n", Part1(in))
-	fmt.Printf("%d\n", Part2(in))
+	fmt.Printf("Part 1: %d\n", Part1(in))
+	fmt.Printf("Part 2: %d\n", Part2(in))
 }
 
 func product(v1 string, v2 string) int {

@@ -3,7 +3,7 @@
 - [Day 02](https://adventofcode.com/2024/day/2)  -- [Solution 02](/puzzles/day02/main.go)
 - [Day 03](https://adventofcode.com/2024/day/3)  -- [Solution 03](/puzzles/day03/main.go)
 - [Day 04](https://adventofcode.com/2024/day/4)  -- [Solution 04](/puzzles/day04/main.go)
-<!-- - [Day 05](https://adventofcode.com/2024/day/5)  -- [Solution 05](/puzzles/day05/main.go) -->
+- [Day 05](https://adventofcode.com/2024/day/5)  -- [Solution 05](/puzzles/day05/main.go)
 <!-- - [Day 06](https://adventofcode.com/2024/day/6)  -- [Solution 06](/puzzles/day06/main.go) -->
 <!-- - [Day 07](https://adventofcode.com/2024/day/7)  -- [Solution 07](/puzzles/day07/main.go) -->
 <!-- - [Day 08](https://adventofcode.com/2024/day/8)  -- [Solution 08](/puzzles/day08/main.go) -->

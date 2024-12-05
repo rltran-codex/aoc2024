@@ -33,15 +33,15 @@ func main() {
 
 func Part1(in [][]string) int {
 	// begin iterating each row to look for X
-	var mu sync.Mutex
-	var wg sync.WaitGroup
+	c := make(chan int)
+	count := 0
 	results := 0
+
 	for row := range in {
 		for col := range in {
 			if in[row][col] == "X" {
-				wg.Add(1)
+				count++
 				go func(puzzle [][]string, row int, col int) {
-					defer wg.Done()
 					words := []int{
 						isXMAS(buildWord(puzzle, row, col, 3, UP)),
 						isXMAS(buildWord(puzzle, row, col, 3, DOWN)),
@@ -53,17 +53,20 @@ func Part1(in [][]string) int {
 						isXMAS(buildWord(puzzle, row, col, 3, DOWNLEFT)),
 					}
 
-					mu.Lock()
+					r := 0
 					for _, i := range words {
-						results += i
+						r += i
 					}
-					mu.Unlock()
+
+					c <- r
 				}(in, row, col)
 			}
 		}
 	}
 
-	wg.Wait()
+	for i := 0; i < count; i++ {
+		results += <-c
+	}
 	return results
 }
 
@@ -80,12 +83,12 @@ func Part2(in [][]string) int {
 					defer wg.Done()
 					// create the cross string, so it can be like MASMAS and etc.
 					n := []string{
-						strings.TrimLeft(buildWord(puzzle, row, col, 1, UPLEFT), "A"),
+						strings.TrimPrefix(buildWord(puzzle, row, col, 1, UPLEFT), "A"),
 						"A",
-						strings.TrimLeft(buildWord(puzzle, row, col, 1, DOWNRIGHT), "A"),
-						strings.TrimLeft(buildWord(puzzle, row, col, 1, UPRIGHT), "A"),
+						strings.TrimPrefix(buildWord(puzzle, row, col, 1, DOWNRIGHT), "A"),
+						strings.TrimPrefix(buildWord(puzzle, row, col, 1, UPRIGHT), "A"),
 						"A",
-						strings.TrimLeft(buildWord(puzzle, row, col, 1, DOWNLEFT), "A"),
+						strings.TrimPrefix(buildWord(puzzle, row, col, 1, DOWNLEFT), "A"),
 					}
 					cross := strings.Join(n, "")
 					mu.Lock()

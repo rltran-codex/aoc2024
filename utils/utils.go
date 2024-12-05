@@ -29,6 +29,15 @@ func GetPuzzleInput(fn string, useSample bool) *os.File {
 	return file
 }
 
+func Index(slice []string, target string) int {
+	for i, item := range slice {
+		if item == target {
+			return i
+		}
+	}
+	panic("NOT FOUND")
+}
+
 func GetFlatPuzzleInput(fn string, useSample bool) string {
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {

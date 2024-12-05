@@ -20,7 +20,48 @@ func main() {
 }
 
 func Part2(pageOrdr map[string][]string, failedSections []string) int {
-	panic("not yet done")
+	results := 0
+	c := make(chan int)
+
+	for _, section := range failedSections {
+		go swapUntilValid(pageOrdr, section, c)
+	}
+
+	for range failedSections {
+		results += <-c
+	}
+	close(c)
+	return results
+}
+
+func swapUntilValid(pageOrdr map[string][]string, section string, c chan int) {
+	r := regexp.MustCompile(`\d+`)
+	pages := r.FindAllString(section, -1)
+	offset := 0
+
+	for i := 0; i < len(pages)-1; i++ {
+		currPage := pages[i]
+		offset += len(currPage) + 1
+		str := section[offset:]
+		update := []byte(str)
+		ok, fail := validate(currPage, update, pageOrdr)
+		if !ok {
+			// swap and reiterate
+			n := string(update[fail[0]:fail[1]])
+			relativeIdx := utils.Index(pages[i+1:], n)
+			targetIdx := i + relativeIdx + 1
+			pages[i], pages[targetIdx] = pages[targetIdx], pages[i]
+
+			// restart loop... this isnt optimal but it gets it done...
+			offset = 0
+			i = -1
+			section = strings.Join(pages, ",")
+		}
+	}
+
+	middlePage := pages[len(pages)/2]
+	n, _ := strconv.Atoi(middlePage)
+	c <- n
 }
 
 func Part1(pageOrdr map[string][]string, prodPage []string) (int, []string) {
@@ -29,39 +70,42 @@ func Part1(pageOrdr map[string][]string, prodPage []string) (int, []string) {
 	var failures []string
 
 	for _, v := range prodPage {
-		nums := r.FindAllString(v, -1)
+		pages := r.FindAllString(v, -1)
 
 		correct := true
 		offset := 0
-		for i := 0; i < len(nums)-1; i++ {
-			rules, ok := pageOrdr[nums[i]]
-			if !ok {
-				continue
-			}
+		for i := 0; i < len(pages)-1; i++ {
+			offset += len(pages[i]) + 1
+			update := []byte(v[offset:])
 
-			pattern := strings.Join(rules, "|")
-			orderReg := regexp.MustCompile(pattern)
-
-			// build the rest of the string
-			offset += len(nums[i]) + 1
-			cmd := []byte(v[offset:])
-			match := orderReg.Find(cmd)
-			if len(match) > 0 {
-				// this section failed, page ordering rule violated.
-				fmt.Println(v, "is incorrect")
-				correct = false
+			if ok, _ := validate(pages[i], update, pageOrdr); !ok {
 				failures = append(failures, v)
+				correct = false
 				break
 			}
 		}
 
 		if correct {
-			middlePage := nums[len(nums)/2]
+			middlePage := pages[len(pages)/2]
 			n, _ := strconv.Atoi(middlePage)
 			results += n
 		}
 	}
 	return results, failures
+}
+
+func validate(currPage string, update []byte, pageOrdr map[string][]string) (bool, []int) {
+	rules, ok := pageOrdr[currPage]
+	if !ok {
+		return true, []int{}
+	}
+
+	pattern := strings.Join(rules, "|")
+	orderReg := regexp.MustCompile(pattern)
+
+	// build the rest of the string
+	match := orderReg.FindIndex(update)
+	return len(match) == 0, match
 }
 
 // Parse the puzzle input.
@@ -80,9 +124,9 @@ func ParsePuzzleInput() (map[string][]string, []string) {
 	for scn.Scan() {
 		line := scn.Text()
 		if strings.Contains(line, "|") {
-			nums := strings.Split(line, "|")
-			before := nums[0]
-			after := nums[1]
+			pages := strings.Split(line, "|")
+			before := pages[0]
+			after := pages[1]
 			pageOrdr[after] = append(pageOrdr[after], before)
 		} else if strings.Contains(line, ",") {
 			pageProd = append(pageProd, strings.TrimSpace(line))

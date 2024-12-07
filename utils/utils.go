@@ -1,27 +1,39 @@
 package utils
 
 import (
+	"bufio"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 )
 
-func GetPuzzleInput(fn string, useSample bool) *os.File {
-	_, filename, _, ok := runtime.Caller(0)
+type RotateDirection int
+
+const (
+	CLOCKWISE = iota
+	ANTICLOCK
+)
+
+func buildFilePath(fn string, sample bool) string {
+	_, currFp, _, ok := runtime.Caller(0)
 	if !ok {
 		panic("Error: Unable to determine the current file")
 	}
 
-	currDir := filepath.Dir(filename)
-	var inDir string
-	if useSample {
-		inDir = filepath.Join(currDir, "input", "sample", fn)
+	currDir := filepath.Dir(currFp)
+	var fp string
+	if sample {
+		fp = filepath.Join(currDir, "input", "sample", fn)
 	} else {
-		inDir = filepath.Join(currDir, "input", fn)
+		fp = filepath.Join(currDir, "input", fn)
 	}
 
-	file, err := os.Open(inDir)
+	return fp
+}
+
+func GetPuzzleInput(fn string, useSample bool) *os.File {
+	file, err := os.Open(buildFilePath(fn, useSample))
 	if err != nil {
 		panic(err)
 	}
@@ -29,30 +41,21 @@ func GetPuzzleInput(fn string, useSample bool) *os.File {
 	return file
 }
 
-func Index(slice []string, target string) int {
+func Index[T comparable](slice []T, target T) int {
 	for i, item := range slice {
 		if item == target {
 			return i
 		}
 	}
-	panic("NOT FOUND")
+	return -1
+}
+
+func Swap(slice []string, first int, second int) {
+	slice[first], slice[second] = slice[second], slice[first]
 }
 
 func GetFlatPuzzleInput(fn string, useSample bool) string {
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		panic("Error: Unable to determine the current file")
-	}
-
-	currDir := filepath.Dir(filename)
-	var inDir string
-	if useSample {
-		inDir = filepath.Join(currDir, "input", "sample", fn)
-	} else {
-		inDir = filepath.Join(currDir, "input", fn)
-	}
-
-	data, err := os.ReadFile(inDir)
+	data, err := os.ReadFile(buildFilePath(fn, useSample))
 	if err != nil {
 		panic(err)
 	}
@@ -61,8 +64,52 @@ func GetFlatPuzzleInput(fn string, useSample bool) string {
 	return input
 }
 
-func RemoveIndex(slice []int, index int) []int {
-	ret := make([]int, 0)
+// Opens the puzzle input file and returns 2D array.
+func Get2DPuzzleInput(fn string, useSample bool) [][]string {
+	lines := GetPuzzleInput(fn, useSample)
+
+	scn := bufio.NewScanner(lines)
+	var data [][]string
+	for scn.Scan() {
+		data = append(data, strings.Split(scn.Text(), ""))
+	}
+
+	return data
+}
+
+func RemoveIndex[T any](slice []T, index int) []T {
+	if index < 0 || index >= len(slice) {
+		return slice
+	}
+	ret := make([]T, 0, len(slice)-1)
 	ret = append(ret, slice[:index]...)
 	return append(ret, slice[index+1:]...)
+}
+
+func Rotate2DSlice[T any](slice [][]T, dir RotateDirection) [][]T {
+	colSize := len(slice[0])
+	rowSize := len(slice)
+	nMatrix := make([][]T, colSize)
+	for i := range nMatrix {
+		nMatrix[i] = make([]T, rowSize)
+	}
+
+	switch dir {
+	case CLOCKWISE:
+		for i := 0; i < rowSize; i++ {
+			for j := 0; j < colSize; j++ {
+				nMatrix[j][rowSize-1-i] = slice[i][j]
+			}
+		}
+	case ANTICLOCK:
+		for i := 0; i < rowSize; i++ {
+			for j := 0; j < colSize; j++ {
+				nMatrix[colSize-1-j][i] = slice[i][j]
+			}
+		}
+	default:
+		panic("Unknown direction to rotate 2D array")
+	}
+
+	return nMatrix
 }

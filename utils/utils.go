@@ -113,3 +113,25 @@ func Rotate2DSlice[T any](slice [][]T, dir RotateDirection) [][]T {
 
 	return nMatrix
 }
+
+func PopAndRequeue[T any](slice *[]T) T {
+	val := (*slice)[0]
+	*slice = append((*slice)[1:], val)
+
+	return val
+}
+
+func DeepCopy2DArray[T any](original [][]T) *[][]T {
+	n := len(original)
+	m := len(original[0])
+	duplicate := make([][]T, n)
+	data := make([]T, n*m)
+	for i := range original {
+		start := i * m
+		end := start + m
+		duplicate[i] = data[start:end:end]
+		copy(duplicate[i], original[i])
+	}
+
+	return &duplicate
+}

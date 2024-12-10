@@ -8,7 +8,7 @@ import (
 
 type GraphNode struct {
 	Id    string
-	Value any
+	Value interface{}
 	Adj   []*GraphNode
 }
 

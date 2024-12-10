@@ -10,11 +10,45 @@ import (
 )
 
 func main() {
-	graph, startingPts := ParsePuzzleInput()
+	_, startingPts := ParsePuzzleInput()
 	// main area to display puzzle answers
-	fmt.Print(graph, startingPts)
-	fmt.Printf("Part 1: %d\n", Part1())
+	fmt.Printf("Part 1: %d\n", Part1(startingPts))
 	fmt.Printf("Part 2: %d\n", Part2())
+}
+
+func Part1(startingPts map[string]*structures.GraphNode) int {
+	results := 0
+	// for each starting point, find the paths that reach to 9.
+	// Note: a starting point can have more than 1 path each
+	for _, v := range startingPts {
+		r := findHikingPath(v)
+		fmt.Println(r)
+		results += r
+	}
+	return results
+}
+
+func Part2() int {
+	panic("Not yet implemented")
+}
+
+func findHikingPath(currNode *structures.GraphNode) int {
+	// base case 1: current node value is 9
+	curr, _ := currNode.Value.(int)
+	if curr == 9 {
+		return 1
+	}
+
+	// traverse nodes that only increment by 1
+	n := 0
+	for _, v := range currNode.Adj {
+		adj, _ := v.Value.(int)
+		diff := adj - curr
+		if diff == 1 {
+			n += findHikingPath(v)
+		}
+	}
+	return n
 }
 
 func parseKey(x int, y int) string {
@@ -47,9 +81,9 @@ func ParsePuzzleInput() (structures.Graph, map[string]*structures.GraphNode) {
 					Id:    key,
 					Value: v,
 				}
-				if v == 0 {
-					startingPts[key] = currNode
-				}
+			}
+			if lavamap[i][j] == "0" {
+				startingPts[key] = currNode
 			}
 
 			pos := []struct {
@@ -85,13 +119,4 @@ func ParsePuzzleInput() (structures.Graph, map[string]*structures.GraphNode) {
 	}
 
 	return ngraph, startingPts
-}
-
-func Part1() int {
-	// for each starting point, find the paths that reach to 9.
-	// Note: a starting point can have more than 1 path each
-
-}
-func Part2() int {
-	panic("Not yet implemented")
 }

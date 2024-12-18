@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -34,10 +33,9 @@ func TestSample1(t *testing.T) {
 	}
 	ps := PlutoStones{
 		Queue:      stones,
-		Stones:     make(map[string][]string),
+		StonesMemo: make(map[string]int),
 		StoneCount: len(stones),
 	}
-	ps.Stones["0"] = append(ps.Stones["0"], "1")
 
 	expectedArr := []string{"1", "2024", "1", "0", "9", "9", "2021976"}
 	ps.blink(1)
@@ -51,32 +49,17 @@ func TestSample2(t *testing.T) {
 		"125",
 		"17",
 	}
-	ps := PlutoStones{
-		Queue:      stones,
-		Stones:     make(map[string][]string),
-		StoneCount: len(stones),
-	}
-	ps.Stones["0"] = append(ps.Stones["0"], "1")
 
 	expected := []int{3, 4, 5, 9, 13, 22}
-	expectedArr := [][]string{
-		{"253000", "1", "7"},
-		{"253", "0", "2024", "14168"},
-		{"512072", "1", "20", "24", "28676032"},
-		{"512", "72", "2024", "2", "0", "2", "4", "2867", "6032"},
-		{"1036288", "7", "2", "20", "24", "4048", "1", "4048", "8096", "28", "67", "60", "32"},
-		{"2097446912", "14168", "4048", "2", "0", "2", "4", "40", "48", "2024", "40", "48", "80", "96", "2", "8", "6", "7", "6", "0", "3", "2"},
-	}
-	for i := 0; i < 6; i++ {
-		ps.blink(1)
-		fmt.Printf("After %d blink: %+v\n", i+1, ps.Queue)
+	for i := 0; i <= 5; i++ {
+		ps := PlutoStones{
+			Queue:      stones,
+			StonesMemo: make(map[string]int),
+			StoneCount: len(stones),
+		}
+		ps.blink(i + 1)
 		if ps.StoneCount != expected[i] {
-			t.Errorf("Expected %d, but was %d", expected[i], ps.StoneCount)
-			for j := 0; j < len(ps.Queue); j++ {
-				if expectedArr[i][j] != ps.Queue[j] {
-					t.Errorf("Expected %s, but was %s at index %d", expectedArr[i][j], ps.Queue[j], j)
-				}
-			}
+			t.Errorf("Blink %d: Expected %d, but was %d", i+1, expected[i], ps.StoneCount)
 		}
 	}
 }

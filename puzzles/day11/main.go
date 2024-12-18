@@ -11,7 +11,7 @@ import (
 
 type PlutoStones struct {
 	Queue      []string
-	Stones     map[string][]string
+	StonesMemo map[string]int
 	StoneCount int
 }
 
@@ -19,6 +19,8 @@ func main() {
 	// main area to display puzzle answers
 	ps := ParsePuzzleInput()
 	fmt.Printf("Part 1: %d\n", Part1(ps))
+	ps = ParsePuzzleInput()
+
 	fmt.Printf("Part 2: %d\n", Part2(ps))
 }
 
@@ -31,11 +33,11 @@ func ParsePuzzleInput() *PlutoStones {
 	scn.Scan()
 	nums := strings.Split(scn.Text(), " ")
 	ps := PlutoStones{
-		Stones:     make(map[string][]string),
+		StonesMemo: make(map[string]int),
 		Queue:      nums,
 		StoneCount: len(nums),
 	}
-	ps.Stones["0"] = append(ps.Stones["0"], "1")
+
 	return &ps
 }
 
@@ -52,33 +54,39 @@ func Part2(ps *PlutoStones) int {
 }
 
 func (ps *PlutoStones) blink(k int) {
-	for i := 0; i < k; i++ {
-		sz := len(ps.Queue)
-
-		for j := 0; j < sz; j++ {
-			// pop the first element
-			currStone := ps.Queue[0]
-			ps.Queue = ps.Queue[1:]
-			// check if it exists in map
-			evoStones, ok := ps.Stones[currStone]
-
-			// handle the evolution cycle of the stone
-			if !ok {
-				if len(currStone)%2 == 0 {
-					evoStones = handleEven(currStone)
-				} else {
-					evoStones = handleMultiply(currStone)
-				}
-			}
-
-			// increment if a new stone was added
-			if len(evoStones) > 1 {
-				ps.StoneCount++
-			}
-			ps.Queue = append(ps.Queue, evoStones...)
-			ps.Stones[currStone] = evoStones
-		}
+	ps.StoneCount = 0
+	for i := 0; i < len(ps.Queue); i++ {
+		currStone := ps.Queue[i]
+		ps.StoneCount += ps.recurBlink(0, k, currStone)
 	}
+}
+
+func (ps *PlutoStones) recurBlink(currBlink int, maxBlink int, stone string) int {
+	if currBlink == maxBlink {
+		return 1
+	}
+	currKey := strings.Join([]string{stone, strconv.Itoa(currBlink)}, ";")
+	val, ok := ps.StonesMemo[currKey]
+	if ok {
+		return val
+	}
+
+	count := 0
+	if stone == "0" {
+		count = ps.recurBlink(currBlink+1, maxBlink, "1")
+		ps.StonesMemo[currKey] = count
+		return count
+	}
+
+	if len(stone)%2 == 0 {
+		evo := handleEven(stone)
+		count = ps.recurBlink(currBlink+1, maxBlink, evo[0]) + ps.recurBlink(currBlink+1, maxBlink, evo[1])
+	} else {
+		evo := handleMultiply(stone)[0]
+		count = ps.recurBlink(currBlink+1, maxBlink, evo)
+	}
+	ps.StonesMemo[currKey] = count
+	return count
 }
 
 func handleEven(stone string) []string {

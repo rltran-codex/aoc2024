@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 )
 
@@ -166,4 +167,9 @@ func DeepCopy2DArray[T any](original [][]T) *[][]T {
 	}
 
 	return &duplicate
+}
+
+func Atoi(num string) int {
+	n, _ := strconv.Atoi(num)
+	return n
 }

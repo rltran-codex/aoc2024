@@ -142,6 +142,17 @@ func PopAndRequeue[T any](slice *[]T) T {
 	return val
 }
 
+func PopQueue[T any](slice *[]T) T {
+	val := (*slice)[0]
+	*slice = (*slice)[1:]
+
+	return val
+}
+
+func PushQueue[T any](slice *[]T, val T) {
+	*slice = append((*slice)[1:], val)
+}
+
 func DeepCopy2DArray[T any](original [][]T) *[][]T {
 	n := len(original)
 	m := len(original[0])

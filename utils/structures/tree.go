@@ -10,6 +10,8 @@ type GraphNode struct {
 	Id    string
 	Value interface{}
 	Adj   []*GraphNode
+	X     int
+	Y     int
 }
 
 // Only use if ID's will be unique
@@ -59,6 +61,16 @@ func (g *Graph) GetGNode(key string) (*GraphNode, error) {
 	}
 
 	return node, nil
+}
+
+func (g *Graph) GetNode(x int, y int) *GraphNode {
+	for _, v := range g.Nodes {
+		if v.X == x && v.Y == y {
+			return v
+		}
+	}
+
+	return nil
 }
 
 // Function links the two nodes together and add them to a graph

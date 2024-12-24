@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/rltran-codex/aoc-2024-go/utils"
 	structures "github.com/rltran-codex/aoc-2024-go/utils/structures"
@@ -70,12 +69,6 @@ func findHikingPath(currNode *structures.GraphNode, visited9s map[string]*struct
 	return n
 }
 
-func parseKey(x int, y int) string {
-	nx := strconv.Itoa(x)
-	ny := strconv.Itoa(y)
-	return strings.Join([]string{nx, ny}, ";")
-}
-
 func ParsePuzzleInput() (structures.Graph, map[string]*structures.GraphNode) {
 	// function to parse the puzzle input from file
 	lavamap := utils.Get2DPuzzleInput("day10.txt", false)
@@ -91,7 +84,7 @@ func ParsePuzzleInput() (structures.Graph, map[string]*structures.GraphNode) {
 
 	for i := range lavamap {
 		for j := range lavamap[i] {
-			key := parseKey(i, j)
+			key := utils.ParseKey(i, j)
 
 			currNode, err := ngraph.GetGNode(key)
 			if err != nil {
@@ -119,7 +112,7 @@ func ParsePuzzleInput() (structures.Graph, map[string]*structures.GraphNode) {
 				if p.Row < 0 || p.Row >= maxRow || p.Col < 0 || p.Col >= maxCol {
 					continue
 				}
-				key := parseKey(p.Row, p.Col)
+				key := utils.ParseKey(p.Row, p.Col)
 				adjNode, err := ngraph.GetGNode(key)
 				if err != nil {
 					v, _ := strconv.Atoi(lavamap[p.Row][p.Col])

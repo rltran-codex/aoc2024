@@ -4,8 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"regexp"
-	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/rltran-codex/aoc-2024-go/utils"
@@ -166,7 +164,7 @@ func Part2(rbts []*Robot) int {
 		rbtPositions = make(map[string]*Robot)
 		for _, v := range rbts {
 			v.moveBot()
-			k := parseKey(v.Position.X, v.Position.Y)
+			k := utils.ParseKey(v.Position.X, v.Position.Y)
 			rbtPositions[k] = v
 		}
 		sec++
@@ -174,12 +172,6 @@ func Part2(rbts []*Robot) int {
 
 	drawGrid(rbts)
 	return sec
-}
-
-func parseKey(x int, y int) string {
-	nx := strconv.Itoa(x)
-	ny := strconv.Itoa(y)
-	return strings.Join([]string{nx, ny}, ";")
 }
 
 // for debugging

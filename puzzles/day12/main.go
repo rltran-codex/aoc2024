@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"math"
 	"sort"
-	"strconv"
-	"strings"
 
 	"github.com/rltran-codex/aoc-2024-go/utils"
 	structures "github.com/rltran-codex/aoc-2024-go/utils/structures"
@@ -116,12 +114,6 @@ func main() {
 }
 
 func ParsePuzzleInput(sample bool) *GardenGraph {
-	parseKey := func(x int, y int) string {
-		nx := strconv.Itoa(x)
-		ny := strconv.Itoa(y)
-		return strings.Join([]string{nx, ny}, ";")
-	}
-
 	farm := utils.Get2DPuzzleInput("day12.txt", sample)
 	maxRow := len(farm)
 	maxCol := len(farm[0])
@@ -133,7 +125,7 @@ func ParsePuzzleInput(sample bool) *GardenGraph {
 
 	for i := range farm {
 		for j := range farm[i] {
-			key := parseKey(i, j)
+			key := utils.ParseKey(i, j)
 
 			currNode, err := ngraph.GetGNode(key)
 			if err != nil {
@@ -157,7 +149,7 @@ func ParsePuzzleInput(sample bool) *GardenGraph {
 				if p.Row < 0 || p.Row >= maxRow || p.Col < 0 || p.Col >= maxCol {
 					continue
 				}
-				key := parseKey(p.Row, p.Col)
+				key := utils.ParseKey(p.Row, p.Col)
 				adjNode, err := ngraph.GetGNode(key)
 				if err != nil {
 					adjNode = &structures.GraphNode{

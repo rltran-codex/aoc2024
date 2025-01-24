@@ -58,5 +58,5 @@ func PopQueue[T any](slice *[]T) T {
 }
 
 func PushQueue[T any](slice *[]T, val T) {
-	*slice = append((*slice)[1:], val)
+	*slice = append((*slice), val)
 }

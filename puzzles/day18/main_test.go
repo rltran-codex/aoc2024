@@ -9,19 +9,21 @@ var GridSize int = 6
 
 func BenchmarkPart1(b *testing.B) {
 	// set up dataset (aka puzzle data)
+	input := ParsePuzzleInput(false, "day18.txt")
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		// code to benchmark
+		Part1(70, input, 1026) // code to benchmark
 	}
 }
 
 func BenchmarkPart2(b *testing.B) {
 	// set up dataset (aka puzzle data)
+	input := ParsePuzzleInput(false, "day18.txt")
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		// code to benchmark
+		Part2(70, input, 1026) // code to benchmark
 	}
 }
 
@@ -46,7 +48,7 @@ func TestGenerateGrid(t *testing.T) {
 	}
 }
 
-func TestShortestPath(t *testing.T) {
+func TestPathfinder(t *testing.T) {
 	bytes := ParsePuzzleInput(true, "day18.txt")
 	grid := generateGrid(GridSize, bytes[:12])
 	expected := []string{
@@ -68,7 +70,7 @@ func TestShortestPath(t *testing.T) {
 		Y: 0,
 	}
 
-	path, steps := findShortestPath(grid, startPt, endPt)
+	path, steps := pathfinder(grid, startPt, endPt)
 	if steps != 22 {
 		t.Errorf("invalid shortest path. Expected: %d, Actual: %d", 22, steps)
 	}

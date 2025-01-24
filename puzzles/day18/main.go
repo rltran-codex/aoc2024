@@ -14,10 +14,12 @@ type Coordinate struct {
 	Y int
 }
 
-func findShortestPath(grid [][]string, startPoint Coordinate, endPoint Coordinate) ([]Coordinate, int) {
+func pathfinder(grid [][]string, startPoint Coordinate, endPoint Coordinate) ([]Coordinate, int) {
+	// initialize BFS
 	visited := make([][]bool, len(grid))
 	dist := make([][]int, len(grid))
 	trace := make([][]*Coordinate, len(grid))
+
 	for i := range visited {
 		visited[i] = make([]bool, len(grid))
 		dist[i] = make([]int, len(grid))
@@ -26,6 +28,10 @@ func findShortestPath(grid [][]string, startPoint Coordinate, endPoint Coordinat
 			dist[i][j] = math.MaxInt // set all points to infinity
 		}
 	}
+
+	queue := []Coordinate{startPoint}
+	visited[startPoint.Y][startPoint.X] = true
+	dist[startPoint.Y][startPoint.X] = 0
 
 	// Directions for movement (up, down, left, right)
 	// NOTE: by changing the order of the direction, the sample's shortest path now matches the algorithm's shortest path
@@ -36,18 +42,14 @@ func findShortestPath(grid [][]string, startPoint Coordinate, endPoint Coordinat
 		{X: 0, Y: -1}, // Up
 	}
 
-	// initialize BFS
-	queue := []Coordinate{startPoint}
-	visited[startPoint.Y][startPoint.X] = true
-	dist[startPoint.Y][startPoint.X] = 0
-
+	// helper functions
 	isValid := func(adj Coordinate) bool {
 		return adj.X >= 0 && adj.X < len(grid) &&
 			adj.Y >= 0 && adj.Y < len(grid) &&
 			!visited[adj.Y][adj.X] && grid[adj.Y][adj.X] != "#"
 	}
 
-	buildPath := func(parent [][]*Coordinate, startPoint, endPoint Coordinate) []Coordinate {
+	buildPath := func(parent [][]*Coordinate, endPoint Coordinate) []Coordinate {
 		var path []Coordinate
 		for current := &endPoint; current != nil; current = parent[current.Y][current.X] {
 			path = append([]Coordinate{*current}, path...)
@@ -55,10 +57,11 @@ func findShortestPath(grid [][]string, startPoint Coordinate, endPoint Coordinat
 		return path
 	}
 
+	// traverse grid to find path to exit
 	for len(queue) > 0 {
 		curr := utils.PopQueue(&queue)
 		if curr == endPoint {
-			return buildPath(trace, startPoint, endPoint), dist[curr.Y][curr.X]
+			return buildPath(trace, endPoint), dist[curr.Y][curr.X]
 		}
 
 		for _, dir := range directions {
@@ -131,7 +134,7 @@ func Part1(gridSize int, bytes []Coordinate, initBytes int) int {
 		Y: 0,
 	}
 
-	_, dist := findShortestPath(grid, startPt, endPt)
+	_, dist := pathfinder(grid, startPt, endPt)
 	return dist
 }
 
@@ -146,12 +149,12 @@ func Part2(gridSize int, bytes []Coordinate, initBytes int) string {
 		Y: 0,
 	}
 	// one at a time, drop bytes.
-	path, _ := findShortestPath(grid, startPt, endPt)
+	path, _ := pathfinder(grid, startPt, endPt)
 	for _, v := range bytes[initBytes:] {
 		grid[v.Y][v.X] = "#"
 		// if "#" lands on the path, then recalculate the path
 		if utils.Index(path, v) != -1 {
-			path, _ = findShortestPath(grid, startPt, endPt)
+			path, _ = pathfinder(grid, startPt, endPt)
 			if path == nil {
 				return fmt.Sprintf("%d,%d", v.X, v.Y)
 			}

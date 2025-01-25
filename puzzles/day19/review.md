@@ -38,4 +38,14 @@ To address this issue, I revised my strategy to always process the string from l
 
 The key condition, `lValid && rValid`, determined whether the left and right parts both matched successfully. If true, the solution would proceed; otherwise, it would backtrack and try the next available towel. This adjustment made the algorithm more robust and reliable for handling all input designs.
 
+In part 2, I had to get redo my approach. Instead of keeping track of the combo that is built, even though it was great to see the exact make up of the combo, this was causing the problem to become confusing for me.
+I needed a way to memoize the problem, so I went ahead and brushed up on the topic and used
+which would store the slice of the design with the combination count. In turn, this was reduced any unneccessary reiterations.
+
+```go
+var cache map[string]int = make(map[string]int)
+```
+
 ## Self-Reflect
+
+Need to get better at keeping the problem more simple and brush up on Dynamic Programming.

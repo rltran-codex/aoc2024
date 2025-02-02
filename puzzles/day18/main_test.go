@@ -7,9 +7,11 @@ import (
 
 var GridSize int = 6
 
+const FILE = "day18.txt"
+
 func BenchmarkPart1(b *testing.B) {
 	// set up dataset (aka puzzle data)
-	input := ParsePuzzleInput(false, "day18.txt")
+	input := ParsePuzzleInput(false, FILE)
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
@@ -19,7 +21,7 @@ func BenchmarkPart1(b *testing.B) {
 
 func BenchmarkPart2(b *testing.B) {
 	// set up dataset (aka puzzle data)
-	input := ParsePuzzleInput(false, "day18.txt")
+	input := ParsePuzzleInput(false, FILE)
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
@@ -28,7 +30,7 @@ func BenchmarkPart2(b *testing.B) {
 }
 
 func TestGenerateGrid(t *testing.T) {
-	bytes := ParsePuzzleInput(true, "day18.txt")
+	bytes := ParsePuzzleInput(true, FILE)
 	grid := generateGrid(GridSize, bytes[:12])
 	expected := []string{
 		"...#...",
@@ -49,7 +51,7 @@ func TestGenerateGrid(t *testing.T) {
 }
 
 func TestPathfinder(t *testing.T) {
-	bytes := ParsePuzzleInput(true, "day18.txt")
+	bytes := ParsePuzzleInput(true, FILE)
 	grid := generateGrid(GridSize, bytes[:12])
 	expected := []string{
 		"OO.#OOO",
@@ -87,7 +89,7 @@ func TestPathfinder(t *testing.T) {
 }
 
 func TestPart2(t *testing.T) {
-	bytes := ParsePuzzleInput(true, "day18.txt")
+	bytes := ParsePuzzleInput(true, FILE)
 	e := "6,1"
 	a := Part2(GridSize, bytes, 12)
 	if a != e {

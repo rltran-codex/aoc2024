@@ -92,7 +92,7 @@ func Part2(in [][]string) int {
 					}
 					cross := strings.Join(n, "")
 					mu.Lock()
-					results += isX_MAS(cross)
+					results += isXmas(cross)
 					mu.Unlock()
 				}(in, row, col)
 			}
@@ -127,7 +127,7 @@ func isXMAS(str string) int {
 	}
 }
 
-func isX_MAS(str string) int {
+func isXmas(str string) int {
 	r := regexp.MustCompile(`MASMAS|MASSAM|SAMSAM|SAMMAS`)
 	match := r.Find([]byte(str))
 	if len(match) != 0 {

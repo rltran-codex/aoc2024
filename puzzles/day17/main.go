@@ -119,7 +119,7 @@ func Part1(c *Computer) string {
 }
 
 func Part2(c *Computer) int {
-	p_len := len(c.ProInstr)
+	plen := len(c.ProInstr)
 	regA := 0
 	regB := c.RegB
 	regC := c.RegC
@@ -132,7 +132,7 @@ func Part2(c *Computer) int {
 		comp.CurrPtr = 0
 	}
 
-	for i := p_len - 1; i >= 0; i-- {
+	for i := plen - 1; i >= 0; i-- {
 		regA <<= 3
 		reset(c, regA)
 		fmt.Printf("RegA shifted 3: %d\n", regA)

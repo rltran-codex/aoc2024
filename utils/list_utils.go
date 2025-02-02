@@ -60,3 +60,7 @@ func PopQueue[T any](slice *[]T) T {
 func PushQueue[T any](slice *[]T, val T) {
 	*slice = append((*slice), val)
 }
+
+func PushStack[T any](slice *[]T, val T) {
+	*slice = append([]T{val}, *slice...)
+}

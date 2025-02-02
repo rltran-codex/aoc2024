@@ -190,7 +190,7 @@ func ParsePuzzleInput() ResonantMap {
 }
 
 func PrintCity(cityMap [][]string) {
-	for i, _ := range cityMap {
+	for i := range cityMap {
 		for _, v := range cityMap[i] {
 			fmt.Print(v)
 		}

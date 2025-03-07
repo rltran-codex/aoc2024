@@ -91,7 +91,7 @@ func TestCase3(t *testing.T) {
 		t.Errorf("Expected %+v, but was %+v", expectedOut, computer.OutInstr)
 	}
 
-	if computer.RegA != expectedA {
+	if computer.RegA != uint64(expectedA) {
 		t.Errorf("Expected RegA to be 0, but is %d", computer.RegA)
 	}
 }
@@ -137,5 +137,5 @@ func TestCasePart2Sample(t *testing.T) {
 	if regA != 117440 {
 		t.Errorf("invalid: %d", regA)
 	}
-	fmt.Printf("regA: %d, %+v", regA, computer)
+	fmt.Printf("regA: %d, computer:  %+v", regA, computer)
 }

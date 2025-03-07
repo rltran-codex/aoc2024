@@ -2,188 +2,169 @@ package main
 
 import (
 	"fmt"
-	"math"
-	"sort"
 
 	"github.com/rltran-codex/aoc-2024-go/utils"
-	structures "github.com/rltran-codex/aoc-2024-go/utils/structures"
 )
 
-type GardenGraph struct {
-	Farm      [][]string
-	FarmGraph structures.Graph
-	Regions   []Region
-	Visited   map[*structures.GraphNode]bool
-}
-
-type Region struct {
-	PlantType string
-	Nodes     []*structures.GraphNode
-	Area      int
-	Perimeter int
-	Sides     int
-}
-
-// post order traversal
-func (g *GardenGraph) identifyRegion(currFlower *structures.GraphNode) (int, int, error) {
-	if g.Visited[currFlower] {
-		return 0, 0, fmt.Errorf("already processed")
-	}
-
-	// new region
-	region := Region{
-		PlantType: currFlower.Value.(string),
-		Nodes:     []*structures.GraphNode{},
-		Area:      0,
-		Perimeter: 0,
-	}
-
-	// create a queue for BFS
-	queue := []*structures.GraphNode{}
-	queue = append(queue, currFlower)
-
-	for len(queue) > 0 {
-		curr := utils.PopQueue(&queue)
-		if g.Visited[curr] {
-			continue
-		}
-
-		// mark current node as visited and increment area
-		g.Visited[curr] = true
-		region.Nodes = append(region.Nodes, curr)
-		region.Area++
-
-		// queue non visited adjacent nodes
-		for _, neighbor := range curr.Adj {
-			if neighbor.Value != currFlower.Value {
-				region.Perimeter++
-			} else if !g.Visited[neighbor] {
-				queue = append(queue, neighbor)
-			}
-		}
-
-		region.Perimeter += 4 - len(curr.Adj)
-	}
-
-	// add region to garden
-	g.Regions = append(g.Regions, region)
-	g.identifySides(&region)
-	return region.Perimeter, region.Perimeter, nil
-}
-
-func (g *GardenGraph) identifySides(r *Region) {
-	if len(r.Nodes) < 2 {
-		r.Sides = 4
-		return
-	}
-}
-
-func (g *GardenGraph) isInbounds(x int, y int) bool {
-	maxRow := len(g.Farm)
-	maxCol := len(g.Farm[0])
-	return x >= 0 && x < maxRow && y >= 0 && y < maxCol
-}
-
-// Sort nodes clockwise based on the angle relative to the centroid
-func sortClockwise(nodes []*structures.GraphNode) {
-	calculateAngle := func(x, y, centerX, centerY float64) float64 {
-		return math.Atan2(y-centerY, x-centerX)
-	}
-	var centerX, centerY float64
-	for _, node := range nodes {
-		centerX += float64(node.X)
-		centerY += float64(node.Y)
-	}
-	centerX /= float64(len(nodes))
-	centerY /= float64(len(nodes))
-
-	sort.Slice(nodes, func(i, j int) bool {
-		// Calculate the angle for both nodes
-		angleJ := calculateAngle(float64(nodes[j].X), float64(nodes[j].Y), centerX, centerY)
-		angleI := calculateAngle(float64(nodes[i].X), float64(nodes[i].Y), centerX, centerY)
-		return angleI < angleJ
-	})
+// {x, y}
+var directions = [][2]int{
+	{0, -1}, // up
+	{1, 0},  // right
+	{0, 1},  // down
+	{-1, 0}, // left
 }
 
 func main() {
+	garden := ParsePuzzleInput(false, "day12.txt")
 	// main area to display puzzle answers
-	garden := ParsePuzzleInput(false)
 	fmt.Printf("Part 1: %d\n", Part1(garden))
-	garden.Visited = make(map[*structures.GraphNode]bool)
 	fmt.Printf("Part 2: %d\n", Part2(garden))
 }
 
-func ParsePuzzleInput(sample bool) *GardenGraph {
-	farm := utils.Get2DPuzzleInput("day12.txt", sample)
-	maxRow := len(farm)
-	maxCol := len(farm[0])
+func ParsePuzzleInput(sample bool, filename string) [][]string {
+	// function to parse the puzzle input from file
+	return utils.Get2DPuzzleInput(filename, sample)
+}
 
-	ngraph := structures.Graph{
-		Nodes: make(map[string]*structures.GraphNode),
-		Size:  0,
+func Part1(garden [][]string) (cost int) {
+	n, m := len(garden), len(garden[0])
+	visited := make([][]bool, n)
+	for i := range garden {
+		visited[i] = make([]bool, m)
 	}
 
-	for i := range farm {
-		for j := range farm[i] {
-			key := utils.ParseKey(i, j)
-
-			currNode, err := ngraph.GetGNode(key)
-			if err != nil {
-				currNode = &structures.GraphNode{
-					Id:    key,
-					Value: farm[i][j],
-				}
+	for y := range garden {
+		for x := range garden {
+			if visited[y][x] {
+				continue
 			}
 
-			pos := []struct {
-				Row int
-				Col int
-			}{
-				{i - 1, j}, // up
-				{i + 1, j}, // down
-				{i, j - 1}, // left
-				{i, j + 1}, // right
-			}
-			var adjNodes []*structures.GraphNode
-			for _, p := range pos {
-				if p.Row < 0 || p.Row >= maxRow || p.Col < 0 || p.Col >= maxCol {
-					continue
-				}
-				key := utils.ParseKey(p.Row, p.Col)
-				adjNode, err := ngraph.GetGNode(key)
-				if err != nil {
-					adjNode = &structures.GraphNode{
-						Id:    key,
-						Value: farm[p.Row][p.Col],
-						X:     p.Row,
-						Y:     p.Col,
-					}
-				}
-				// queue node to be added
-				adjNodes = append(adjNodes, adjNode)
-			}
-
-			// link graph node
-			ngraph.AddGNode(currNode, adjNodes...)
+			id, currPos := garden[y][x], [2]int{x, y}
+			area, perimeter, _ := fence(garden, visited, id, currPos)
+			cost += (area * perimeter)
 		}
 	}
-
-	return &GardenGraph{
-		FarmGraph: ngraph,
-		Farm:      farm,
-		Visited:   make(map[*structures.GraphNode]bool),
-	}
+	return cost
 }
 
-func Part1(g *GardenGraph) int {
-	result := 0
-	for _, n := range g.FarmGraph.Nodes {
-		area, perimeter, _ := g.identifyRegion(n)
-		result += area * perimeter
+func Part2(garden [][]string) (cost int) {
+	n, m := len(garden), len(garden[0])
+	visited := make([][]bool, n)
+	for i := range garden {
+		visited[i] = make([]bool, m)
 	}
 
-	return result
+	for y := range garden {
+		for x := range garden {
+			if visited[y][x] {
+				continue
+			}
+
+			id, currPos := garden[y][x], [2]int{x, y}
+			area, _, sides := fence(garden, visited, id, currPos)
+			// fmt.Printf("%s: %d %d\n", garden[y][x], area, sides)
+			cost += (area * sides)
+		}
+	}
+	return cost
 }
-func Part2(g *GardenGraph) int {
-	panic("Not yet implemented")
+
+// dfs traversal
+func fence(garden [][]string, visited [][]bool, id string, position [2]int) (area int, perimeter int, corners int) {
+	x, y := position[0], position[1]
+	// Base Case 1: out of bounds or region != id, increment perimeter only
+	if x < 0 || x >= len(garden) || y < 0 || y >= len(garden[0]) || garden[y][x] != id {
+		return 0, 1, 0
+	}
+	// Base Case 2: if visited, do nothing
+	if visited[y][x] {
+		return 0, 0, 0
+	}
+
+	visited[y][x] = true
+	area += 1
+	// check corners for current tile
+	corners += cornerCount(garden, position)
+	for _, v := range directions[:4] {
+		nx, ny := x+v[0], y+v[1]
+		a, p, c := fence(garden, visited, id, [2]int{nx, ny})
+		area += a
+		perimeter += p
+		corners += c
+	}
+
+	return area, perimeter, corners
+}
+
+/*
+idea here is to rotate the L shaped inspection area around the tile point
+and check two cases for corners.
+for example:
+1st
+|*|*| |
+|*|x| |
+| | | |
+
+2nd
+| |*|*|
+| |x|*|
+| | | |
+
+3rd
+| | | |
+| |x|*|
+| |*|*|
+
+4th
+| | | |
+|*|x| |
+|*|*| |
+
+where * is the tile to inspect and x is the current tile (pos)
+In each rotation, check for these case (use 1st case as reference for this):
+ 1. if upper and left is are not in bounds or same flower, then corner found
+ 2. if upper and left are true, but left is false, then corner found
+*/
+func cornerCount(garden [][]string, pos [2]int) (corners int) {
+	x, y := pos[0], pos[1]
+	flower := garden[y][x]
+	maxWidth, maxHeight := len(garden[0]), len(garden)
+
+	dir := []*[2]int{
+		{-1, -1}, // up left
+		{-1, 0},  // up
+		{0, -1},  // left
+	}
+
+	rotate := func() {
+		for _, d := range dir {
+			t := d[0]
+			d[0] = d[1]
+			d[1] = -1 * t
+		}
+	}
+	inBounds := func(d [2]int) bool {
+		i, j := d[0], d[1]
+		return j >= 0 && j < maxHeight && i >= 0 && i < maxWidth
+	}
+
+	for i := 0; i < 4; i++ {
+		UL := [2]int{x + dir[0][0], y + dir[0][1]}
+		UR := [2]int{x + dir[1][0], y + dir[1][1]}
+		LL := [2]int{x + dir[2][0], y + dir[2][1]}
+		ul := inBounds(UL) && garden[UL[1]][UL[0]] == flower
+		ur := inBounds(UR) && garden[UR[1]][UR[0]] == flower
+		ll := inBounds(LL) && garden[LL[1]][LL[0]] == flower
+
+		if !ur && !ll {
+			corners++
+		}
+		if ur && ll && !ul {
+			corners++
+		}
+
+		rotate()
+	}
+
+	return corners
 }

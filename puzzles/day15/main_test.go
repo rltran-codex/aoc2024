@@ -1,7 +1,8 @@
 package main
 
 import (
-	"bufio"
+	"fmt"
+	"io"
 	"strings"
 	"testing"
 
@@ -9,11 +10,11 @@ import (
 )
 
 func BenchmarkPart1(b *testing.B) {
-	data := ParsePuzzleInput(false, "day15.txt") // set up dataset (aka puzzle data)
+	// set up dataset (aka puzzle data)
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		Part1(data) // code to benchmark
+		// code to benchmark
 	}
 }
 
@@ -26,68 +27,82 @@ func BenchmarkPart2(b *testing.B) {
 	}
 }
 
-func TestMovingFish(t *testing.T) {
-	ls := ParsePuzzleInput(true, "day15_sample.txt")
-	expected := openExpected("day15_expected.txt")
-	max := len(ls.Instructions) - 1
+func TestA(t *testing.T) {
+	grid, instr, fish := ParsePuzzleInput(true, "day15_small.txt")
+	fmt.Print(grid, instr, fish)
+}
 
-	for i := range ls.Instructions {
-		ls.performMove()
-		actual := ""
-		for _, v := range ls.Warehouse {
-			actual += strings.Join(v, "")
-		}
+func TestB(t *testing.T) {
+	grid, instr, fish := ParsePuzzleInput(true, "day15.txt")
+	eFile := utils.GetPuzzleInput("day15_expected.txt", true)
+	data, err := io.ReadAll(eFile)
+	if err != nil {
+		t.Fail()
+	}
 
-		if i != max && expected[i] != actual {
-			t.Errorf("Expected map does not match with actual.")
-		}
+	replacer := strings.NewReplacer("\r", "", "\n", "")
+	e := replacer.Replace(string(data))
+	lfish := Lanternfish{
+		grid:         grid,
+		instructions: instr,
+		pos:          &fish,
+	}
+	for i := range instr {
+		m := instr[i]
+		lfish.moveFish(m)
+	}
+	var lines []string
+	for _, row := range lfish.grid {
+		lines = append(lines, strings.Join(row, ""))
+	}
+	a := strings.Join(lines, "")
+	if a != e {
+		t.Error()
 	}
 }
 
-func TestSmallSample(t *testing.T) {
-	ls := ParsePuzzleInput(true, "day15_sample.txt")
-	expected := 2028
-	for len(ls.Instructions) > 0 {
-		ls.performMove()
-	}
+func TestPart1Small(t *testing.T) {
+	grid, instr, fish := ParsePuzzleInput(true, "day15_small.txt")
 
-	actual := ls.gatherGPS()
-	if expected != actual {
-		t.Errorf("Expected %d, but actual %d.", expected, actual)
+	lfish := Lanternfish{
+		grid:         grid,
+		instructions: instr,
+		pos:          &fish,
 	}
-}
-
-func TestBigSample(t *testing.T) {
-	ls := ParsePuzzleInput(true, "day15.txt")
-	expected := 10092
-	for len(ls.Instructions) > 0 {
-		ls.performMove()
-	}
-
-	actual := ls.gatherGPS()
-	if expected != actual {
-		t.Errorf("Expected %d, but actual %d.", expected, actual)
+	a := Part1(lfish)
+	e := 2028
+	if a != e {
+		t.Errorf("expevted %d, actual %d", e, a)
 	}
 }
 
-func openExpected(filename string) []string {
-	file := utils.GetPuzzleInput(filename, true)
-	defer file.Close()
+func TestPart1Large(t *testing.T) {
+	grid, instr, fish := ParsePuzzleInput(true, "day15.txt")
 
-	scn := bufio.NewScanner(file)
-	cases := []string{}
+	lfish := Lanternfish{
+		grid:         grid,
+		instructions: instr,
+		pos:          &fish,
+	}
+	a := Part1(lfish)
+	e := 10092
+	if a != e {
+		t.Errorf("expevted %d, actual %d", e, a)
+	}
+}
 
-	c := ""
-	for scn.Scan() {
-		line := strings.TrimSpace(scn.Text())
-		if len(line) == 0 {
-			cases = append(cases, c)
-			c = ""
-			continue
-		}
+func TestExpand(t *testing.T) {
+	grid, instr, fish := ParsePuzzleInput(true, "day15.txt")
 
-		c += line
+	lfish := Lanternfish{
+		grid:         grid,
+		instructions: instr,
+		pos:          &fish,
+	}
+	lfish.expandGrid()
+	eY, eX := lfish.pos[0], lfish.pos[1]
+	if eY != 4 || eX != 8 {
+		t.Error("position not correctly updated after expansion")
 	}
 
-	return cases
 }

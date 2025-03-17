@@ -8,182 +8,45 @@ import (
 	"github.com/rltran-codex/aoc-2024-go/utils"
 )
 
-type Direction int
-
-const (
-	Up = iota
-	Down
-	Right
-	Left
-)
-
-type LanternfishSchool struct {
-	Warehouse        [][]string
-	Instructions     []string
-	CurrentPosition  Coordinate
-	CurrentDirection Direction
-	Edges            struct {
-		lowerX int
-		lowerY int
-		upperX int
-		upperY int
-	}
+type Lanternfish struct {
+	grid         [][]string
+	pos          *[2]int
+	instructions []string
 }
 
-type Coordinate struct {
-	X int
-	Y int
-}
-
-func (ls *LanternfishSchool) gatherGPS() int {
-	sum := 0
-	for r := 0; r < len(ls.Warehouse); r++ {
-		for c := 0; c < len(ls.Warehouse[r]); c++ {
-			if ls.Warehouse[r][c] != "O" {
-				continue
-			}
-
-			sum += (100 * r) + c
-		}
-	}
-
-	return sum
-}
-
-func (ls *LanternfishSchool) performMove() {
-	// pop the instruction
-	nextMove := utils.PopQueue(&ls.Instructions)
-	nextCoor, nextTile := ls.parseMove(nextMove)
-	// if the next move contains a #, don't do anything
-	switch nextTile {
-	case "#":
-		return
-	case ".":
-		ls.Warehouse[nextCoor.Y][nextCoor.X] = "@"
-		ls.Warehouse[ls.CurrentPosition.Y][ls.CurrentPosition.X] = "."
-		ls.CurrentPosition = nextCoor
-	case "O":
-		// count how many boxes there are
-		// push the boxes
-		ls.handleBoxMove()
-	}
-}
-
-func (ls *LanternfishSchool) handleBoxMove() {
-	pushBoxes := func(row int, leftPush bool) {
-		leftBound := ls.CurrentPosition.X
-		rightBound := ls.CurrentPosition.X
-		for {
-			if ls.Warehouse[row][rightBound] == "#" || ls.Warehouse[row][rightBound] == "." {
-				break
-			}
-			if leftPush {
-				rightBound--
-			} else {
-				rightBound++
-			}
-		}
-		// make the shift
-		if ls.Warehouse[row][rightBound] == "#" {
-			return
-		}
-
-		r := []string{}
-		if leftPush {
-			leftBound, rightBound = rightBound, leftBound
-			r = append(r, ls.Warehouse[row][leftBound+1:rightBound+1]...)
-			r = append(r, ".")
-		} else {
-			r = append(r, ".")
-			r = append(r, ls.Warehouse[row][leftBound:rightBound]...)
-		}
-		for i, v := range r {
-			ls.Warehouse[row][i+leftBound] = v
-		}
-	}
-
-	// if up or down, rotate the map to make moving boxes easy
-	// if left or right move easily find the length of the boxes to move
-	switch ls.CurrentDirection {
-	case Up:
-		ls.Warehouse = utils.Rotate2DSlice(ls.Warehouse, utils.ANTICLOCK)
-		ls.findFish()
-		pushBoxes(ls.CurrentPosition.Y, true)
-		ls.Warehouse = utils.Rotate2DSlice(ls.Warehouse, utils.CLOCKWISE)
-		ls.findFish()
-	case Down:
-		ls.Warehouse = utils.Rotate2DSlice(ls.Warehouse, utils.ANTICLOCK)
-		ls.findFish()
-		pushBoxes(ls.CurrentPosition.Y, false)
-		ls.Warehouse = utils.Rotate2DSlice(ls.Warehouse, utils.CLOCKWISE)
-		ls.findFish()
-	case Left:
-		pushBoxes(ls.CurrentPosition.Y, true)
-		ls.findFish()
-	case Right:
-		pushBoxes(ls.CurrentPosition.Y, false)
-		ls.findFish()
-	}
-
-}
-
-func (ls *LanternfishSchool) findFish() {
-	for r := 0; r < len(ls.Warehouse); r++ {
-		for c := 0; c < len(ls.Warehouse[0]); c++ {
-			if ls.Warehouse[r][c] == "@" {
-				ls.CurrentPosition.X = c
-				ls.CurrentPosition.Y = r
-				return
-			}
-		}
-	}
-}
-
-func (ls *LanternfishSchool) parseMove(dir string) (Coordinate, string) {
-	x := 0
-	y := 0
-	switch dir {
-	case "^":
-		y--
-		ls.CurrentDirection = Up
-	case ">":
-		x++
-		ls.CurrentDirection = Right
-	case "v":
-		y++
-		ls.CurrentDirection = Down
-	case "<":
-		x--
-		ls.CurrentDirection = Left
-	default:
-		panic("unknown move")
-	}
-
-	nextCoordinate := Coordinate{
-		X: (ls.CurrentPosition.X + x),
-		Y: (ls.CurrentPosition.Y + y),
-	}
-	nextTile := ls.Warehouse[nextCoordinate.Y][nextCoordinate.X]
-	return nextCoordinate, nextTile
+type space struct {
+	v string
+	c [2]int
 }
 
 func main() {
-	data := ParsePuzzleInput(false, "day15.txt")
 	// main area to display puzzle answers
-	fmt.Printf("Part 1: %d\n", Part1(data))
+	grid, instr, fishPos := ParsePuzzleInput(false, "day15.txt")
+	fish := Lanternfish{
+		grid:         grid,
+		instructions: instr,
+		pos:          &fishPos,
+	}
+	fmt.Printf("Part 1: %d\n", Part1(fish))
+	// main area to display puzzle answers
+	grid, instr, fishPos = ParsePuzzleInput(false, "day15.txt")
+	fish = Lanternfish{
+		grid:         grid,
+		instructions: instr,
+		pos:          &fishPos,
+	}
+	fish.expandGrid()
 	fmt.Printf("Part 2: %d\n", Part2())
 }
 
-func ParsePuzzleInput(sample bool, filename string) *LanternfishSchool {
-	puzzle := utils.GetPuzzleInput(filename, sample)
-	defer puzzle.Close()
-
-	scn := bufio.NewScanner(puzzle)
+func ParsePuzzleInput(sample bool, filename string) ([][]string, []string, [2]int) {
+	file := utils.GetPuzzleInput(filename, sample)
+	scn := bufio.NewScanner(file)
+	var grid [][]string
+	var instr []string
+	var curr [2]int
 
 	moveInstructions := false
-
-	warehouse := [][]string{}
-	instructions := []string{}
 	for scn.Scan() {
 		line := scn.Text()
 		if len(strings.TrimSpace(line)) == 0 {
@@ -192,48 +55,163 @@ func ParsePuzzleInput(sample bool, filename string) *LanternfishSchool {
 
 		l := strings.Split(line, "")
 		if moveInstructions {
-			instructions = append(instructions, l...)
+			instr = append(instr, l...)
 		} else {
-			warehouse = append(warehouse, l)
+			grid = append(grid, l)
 		}
 	}
 
-	// find the starting position
-	currPos := Coordinate{}
-	for i := 0; i < len(warehouse); i++ {
-		for j := 0; j < len(warehouse[0]); j++ {
-			if warehouse[i][j] == "@" {
-				currPos.X = j
-				currPos.Y = i
+	for i := 0; i < len(grid); i++ {
+		for j := 0; j < len(grid[0]); j++ {
+			if grid[i][j] == "@" {
+				curr = [2]int{i, j}
+			}
+		}
+	}
+	return grid, instr, curr
+}
+
+func Part1(f Lanternfish) int {
+	for i := range f.instructions {
+		instr := f.instructions[i]
+		f.moveFish(instr)
+	}
+
+	sum := 0
+	for r := range f.grid {
+		for c := range f.grid[r] {
+			if f.grid[r][c] == "O" {
+				sum += 100*r + c
 			}
 		}
 	}
 
-	return &LanternfishSchool{
-		Warehouse:       warehouse,
-		Instructions:    instructions,
-		CurrentPosition: currPos,
-		Edges: struct {
-			lowerX int
-			lowerY int
-			upperX int
-			upperY int
-		}{
-			lowerX: 0,
-			lowerY: 0,
-			upperX: len(warehouse) - 1,
-			upperY: len(warehouse[0]) - 1,
-		},
-	}
+	return sum
 }
 
-func Part1(ls *LanternfishSchool) int {
-	for len(ls.Instructions) > 0 {
-		ls.performMove()
-	}
-
-	return ls.gatherGPS()
-}
 func Part2() int {
 	panic("Not yet implemented")
+}
+
+func parseMove(m string) (dy int, dx int) {
+	switch m {
+	case "<":
+		dy = 0
+		dx = -1
+	case ">":
+		dy = 0
+		dx = 1
+	case "^":
+		dy = -1
+		dx = 0
+	case "v":
+		dy = 1
+		dx = 0
+	}
+	return dy, dx
+}
+
+func (fish *Lanternfish) performPush(stack []space) {
+	for len(stack) > 2 {
+		e1 := utils.PopQueue(&stack)
+		e2 := stack[0]
+
+		y, x := e1.c[0], e1.c[1]
+		fish.grid[y][x] = e2.v
+	}
+
+	e1 := utils.PopQueue(&stack)
+	e2 := stack[0]
+	y, x := e1.c[0], e1.c[1]
+	fish.grid[y][x] = e2.v
+	if e2.v == "@" {
+		fish.pos = &[2]int{y, x}
+	}
+
+	y, x = e2.c[0], e2.c[1]
+	fish.grid[y][x] = "."
+}
+
+func (fish *Lanternfish) moveFish(instruction string) {
+	y, x := fish.pos[0], fish.pos[1]
+	dy, dx := parseMove(instruction)
+
+	// use a stack
+	stack := []space{}
+	for {
+		currTile := fish.grid[y][x]
+		if currTile == "#" {
+			return
+		}
+
+		utils.PushStack(&stack, space{
+			v: currTile,
+			c: [2]int{y, x},
+		})
+
+		if currTile == "." {
+			fish.performPush(stack)
+			break
+		}
+		y, x = (y + dy), (x + dx)
+	}
+}
+
+func (fish *Lanternfish) expandGrid() {
+	expandedGrid := [][]string{}
+	for r := range fish.grid {
+		row := []string{}
+		for c := range fish.grid[r] {
+			var t []string
+			switch fish.grid[r][c] {
+			case "O":
+				t = []string{"[", "]"}
+			case ".":
+				t = []string{".", "."}
+			case "@":
+				t = []string{"@", "."}
+				// update fish.pos
+				fish.pos = &[2]int{r, (2 * c)}
+
+			case "#":
+				t = []string{"#", "#"}
+			}
+			row = append(row, t...)
+		}
+		expandedGrid = append(expandedGrid, row)
+	}
+
+	fish.grid = expandedGrid
+}
+
+func (fish *Lanternfish) moveFish2(tile [2]int, instruction string) {
+	x, y := tile[0], tile[1]
+	dy, dx := parseMove(instruction)
+
+	// use a stack
+	stack := []space{}
+	for {
+		currTile := fish.grid[y][x]
+		if currTile == "#" {
+			return
+		}
+
+		utils.PushStack(&stack, space{
+			v: currTile,
+			c: [2]int{y, x},
+		})
+
+		switch currTile {
+		case "[", "]":
+			if instruction == "<" || instruction == ">" {
+				return
+			}
+
+		case "O":
+			continue
+		case ".":
+			// space available, perform push
+		}
+		y, x = (y + dy), (x + dx)
+	}
 }
